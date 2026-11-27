@@ -35,3 +35,7 @@ Every interactive element in the frontend is documented here alongside its backe
 | `/quiz` | Mode & Skill selectors + Start button | Fetch non-repeating prioritized quiz | `GET /api/v1/quiz/session` | Reads `Question`, `Attempt`, `SkillMastery` | `apps/api/tests/quiz-adaptive.test.ts` |
 | `/quiz` | Submit answer button | Score MCQ/Multi-Select & update SM-2 | `POST /api/v1/attempts` | Creates `Attempt`, updates `SkillMastery` | `apps/api/tests/quiz-adaptive.test.ts` |
 | `/baseline` | Continue / Finish buttons | Calibrate baseline skill profile | `POST /api/v1/attempts`, `GET /api/v1/skills/mastery`, `GET /api/v1/recommendations/next` | Updates `SkillMastery` & returns risk score | `apps/api/tests/quiz-adaptive.test.ts` |
+| `/games` | Lab tabs (Threat Triage / PassForge / NetShield / Daily 60s) | Switch active training lab | — | — | `apps/web` M5 |
+| `/games` | Threat Triage & Daily 60s controls | Start, submit Report/Safe, finish | `POST /api/v1/games/:type/start`, `event`, `finish` | Creates & scores `GameSession`, awards XP | `apps/api/tests/games.test.ts` |
+| `/games` | PassForge input & Complete challenge button | Client-side `zxcvbn` + metadata submit | `POST /api/v1/games/passforge/start`, `event`, `finish` | Stores `GameSession` metadata (never raw password), awards badge | `apps/api/tests/games.test.ts` |
+| `/games` | NetShield safeguard selects & Run wave button | Validate wave placements & finish | `POST /api/v1/games/netshield/start`, `event`, `finish` | Stores wave results & `serverScore` | `apps/api/tests/games.test.ts` |
