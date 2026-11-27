@@ -17,6 +17,7 @@ import { adaptiveRoutes } from "./routes/adaptive.js";
 import { gamesRoutes } from "./routes/games.js";
 import { recognitionRoutes } from "./routes/recognition.js";
 import { adminRoutes } from "./routes/admin.js";
+import { settingsRoutes } from "./routes/settings.js";
 
 export async function buildApp() {
   const env = loadEnv();
@@ -103,6 +104,7 @@ export async function buildApp() {
       await v1.register(gamesRoutes);
       await v1.register(recognitionRoutes);
       await v1.register(adminRoutes);
+      await v1.register(settingsRoutes);
     },
     { prefix: "/api/v1" }
   );

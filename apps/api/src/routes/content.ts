@@ -495,4 +495,124 @@ export async function contentRoutes(app: FastifyInstance) {
       });
     }
   );
+
+  // POST /api/v1/questions (Author/Admin CRUD)
+  app.post(
+    "/questions",
+    { preHandler: [requireAuth, requireRole("CONTENT_AUTHOR", "ORG_ADMIN")] },
+    async (request, reply) => {
+      const body = z
+        .object({
+          type: z
+            .enum(["MCQ", "MULTI_SELECT", "SCENARIO_BASED", "DRAG_MATCH", "SPOT_FLAG"])
+            .default("MCQ"),
+          skillTag: SkillTagEnum,
+          difficulty: DifficultyEnum.default("BEGINNER"),
+          prompt: z.string().min(8).max(1000),
+          optionsJson: z
+            .array(
+              z.object({
+                id: z.string().min(1),
+                text: z.string().min(1),
+                isCorrect: z.boolean(),
+              })
+            )
+            .min(2),
+          explanation: z.string().min(5).max(1500),
+          isPublished: z.boolean().default(true),
+        })
+        .parse(request.body);
+
+      const question = await prisma.question.create({
+        data: {
+          type: body.type,
+          skillTag: body.skillTag,
+          difficulty: body.difficulty,
+          prompt: body.prompt,
+          optionsJson: body.optionsJson,
+          explanation: body.explanation,
+          isPublished: body.isPublished,
+        },
+      });
+
+      return reply.status(201).send({ question });
+    }
+  );
+
+  // GET /api/v1/scenarios/export (JSON export for Author/Admin)
+  app.get(
+    "/scenarios/export",
+    { preHandler: [requireAuth, requireRole("CONTENT_AUTHOR", "ORG_ADMIN")] },
+    async (request, reply) => {
+      const orgId = request.auth!.organizationId;
+      const scenarios = await prisma.scenario.findMany({
+        where: {
+          OR: [{ organizationId: null }, { organizationId: orgId }],
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return reply
+        .header("Content-Type", "application/json; charset=utf-8")
+        .header(
+          "Content-Disposition",
+          'attachment; filename="adaptsec-scenarios.json"'
+        )
+        .send(JSON.stringify({ exportedAt: new Date().toISOString(), scenarios }, null, 2));
+    }
+  );
+
+  // POST /api/v1/scenarios/import (JSON import for Author/Admin)
+  app.post(
+    "/scenarios/import",
+    { preHandler: [requireAuth, requireRole("CONTENT_AUTHOR", "ORG_ADMIN")] },
+    async (request, reply) => {
+      const orgId = request.auth!.organizationId;
+      const body = z
+        .object({
+          scenarios: z.array(CreateScenarioSchema).min(1).max(50),
+        })
+        .parse(request.body);
+
+      const createdIds: string[] = [];
+      for (const s of body.scenarios) {
+        const slugBase = (s.slug || s.title)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+        const uniqueSlug = `${slugBase}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+        const created = await prisma.scenario.create({
+          data: {
+            organizationId: orgId,
+            title: s.title,
+            slug: uniqueSlug,
+            description: s.description,
+            trackId: s.trackId ?? null,
+            channel: s.channel,
+            difficulty: s.difficulty,
+            skillTag: s.skillTag,
+            contentJson: s.contentJson as any,
+            redFlagsJson: s.redFlagsJson as any,
+            correctAction: s.correctAction,
+            explanationSuccess: s.explanationSuccess,
+            explanationFailure: s.explanationFailure,
+            whatToDoInstead: s.whatToDoInstead,
+            isPublished: s.isPublished,
+          },
+        });
+        createdIds.push(created.id);
+      }
+
+      await recordAuditLog({
+        organizationId: orgId,
+        actorId: request.auth!.userId,
+        action: "SCENARIOS_IMPORTED",
+        targetType: "Scenario",
+        metadata: { count: createdIds.length },
+        ipAddress: request.ip,
+      });
+
+      return reply.status(201).send({ importedCount: createdIds.length, ids: createdIds });
+    }
+  );
 }

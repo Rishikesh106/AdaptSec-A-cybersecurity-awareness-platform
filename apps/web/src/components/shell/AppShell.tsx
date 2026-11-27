@@ -25,6 +25,8 @@ import {
   AlertTriangle,
   BarChart3,
   Megaphone,
+  Settings,
+  PenTool,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -97,6 +99,7 @@ export function AppShell({ children, breadcrumb }: AppShellProps) {
   const user = data.user;
   const isAdmin =
     user.activeRole === "ORG_ADMIN" || user.activeRole === "SUPER_ADMIN";
+  const isAuthor = isAdmin || user.activeRole === "CONTENT_AUTHOR";
 
   const navGroups = [
     {
@@ -112,16 +115,22 @@ export function AppShell({ children, breadcrumb }: AppShellProps) {
         { href: "/certificates", label: "Certificates", icon: Award },
         { href: "/threat-feed", label: "Scam Feed", icon: AlertTriangle },
         { href: "/sessions", label: "Active Sessions", icon: KeyRound },
+        { href: "/settings", label: "Settings", icon: Settings },
       ],
     },
-    ...(isAdmin
+    ...(isAuthor
       ? [
           {
             label: "Administration",
             items: [
-              { href: "/admin", label: "Risk Analytics", icon: BarChart3 },
-              { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
-              { href: "/team", label: "Team & Invites", icon: Users },
+              ...(isAdmin
+                ? [
+                    { href: "/admin", label: "Risk Analytics", icon: BarChart3 },
+                    { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
+                    { href: "/team", label: "Team & Invites", icon: Users },
+                  ]
+                : []),
+              { href: "/author", label: "Content Studio", icon: PenTool },
             ],
           },
         ]

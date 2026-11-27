@@ -78,5 +78,9 @@ export const apiClient = {
       method: "PATCH",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
-  delete: <T>(path: string) => rawFetch<T>(path, { method: "DELETE" }),
+  delete: <T>(path: string, body?: unknown) =>
+    rawFetch<T>(path, {
+      method: "DELETE",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
 };
