@@ -26,3 +26,9 @@ Every interactive element in the frontend is documented here alongside its backe
 | `/simulations` | Channel/difficulty/search filters | Filter paginated scenarios | `GET /api/v1/scenarios` | Queries `Scenario` scoped by org | `apps/api/tests/content.test.ts` |
 | `/simulations` | Pagination Next/Prev buttons | Page through scenario catalog | `GET /api/v1/scenarios` | Offset/limit query | `apps/api/tests/content.test.ts` |
 | `/simulations` | Inspect button & detail drawer | Open scenario brief | `GET /api/v1/scenarios/:slug` | Reads `Scenario` (redFlags hidden for Learner) | `apps/api/tests/content.test.ts` |
+| `/simulations` | Launch link | Navigate to `/simulations/[slug]` | — | — | Smoke M3 |
+| `/simulations/[slug]` | Inspect headers toggle (`InboxSimulator`) | Reveal SPF/DKIM/DMARC & Return-Path | — | — | `InboxSimulator` |
+| `/simulations/[slug]` | Hyperlink hover & click (`InboxSimulator`) | Show target URL / submit `CLICK_LINK` | `POST /api/v1/attempts` | Creates `Attempt`, updates `SkillMastery`, `User.xp` | `apps/api/tests/attempts.test.ts` |
+| `/simulations/[slug]` | Attachment inspect modal (`InboxSimulator`) | View file metadata & scanner notes | — | — | `InboxSimulator` |
+| `/simulations/[slug]` | Report phish / Escalate / Safe buttons | Submit decision & timeMs to server | `POST /api/v1/attempts` | Scores attempt, updates SM-2 & XP | `apps/api/tests/attempts.test.ts` |
+| `/simulations/[slug]` | Retry scenario button | Reset hesitation timer & state | — | — | `SimulationFeedbackPanel` |

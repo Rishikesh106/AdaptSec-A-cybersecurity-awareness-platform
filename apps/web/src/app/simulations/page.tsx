@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { AppShell } from "@/components/shell/AppShell";
@@ -158,14 +159,20 @@ export default function SimulationsPage() {
                     <td className="py-2.5 px-4 text-xs text-ink-secondary">
                       {row.skillTag.replace("_", " ")}
                     </td>
-                    <td className="py-2.5 px-4 text-right">
+                    <td className="py-2.5 px-4 text-right space-x-2">
                       <button
                         type="button"
                         onClick={() => setSelectedSlug(row.slug)}
-                        className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-brand hover:bg-brand-tint"
+                        className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-ink-secondary hover:bg-subtle"
                       >
                         Inspect
                       </button>
+                      <Link
+                        href={`/simulations/${row.slug}`}
+                        className="inline-flex rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-hover"
+                      >
+                        Launch
+                      </Link>
                     </td>
                   </tr>
                 ))}
