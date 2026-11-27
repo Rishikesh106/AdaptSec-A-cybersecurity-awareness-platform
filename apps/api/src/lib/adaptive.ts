@@ -154,3 +154,85 @@ export function computeHumanRiskScore(
 
   return Math.max(0, Math.min(100, Math.round(risk)));
 }
+
+export interface AdaptiveCandidateScenario {
+  id: string;
+  slug: string;
+  title: string;
+  channel: string;
+  difficulty: Difficulty;
+  skillTag: string;
+}
+
+export interface AdaptiveRecommendation {
+  type: "SCENARIO" | "QUIZ";
+  title: string;
+  skillTag: string;
+  difficulty: Difficulty;
+  reason: string;
+  scenarioSlug?: string;
+}
+
+/**
+ * Pure server-side next-best-activity recommender.
+ * Prioritizes overdue SM-2 reviews first, then lowest mastery skill.
+ */
+export function recommendNextActivity(
+  masteries: Array<{ skillTag: string; score: number; nextReviewAt: Date | null }>,
+  scenarios: AdaptiveCandidateScenario[],
+  completedScenarioIds: string[]
+): AdaptiveRecommendation {
+  const now = new Date();
+  const allSkills = Object.keys(SKILL_WEIGHTS);
+
+  const skillRecords = allSkills.map((skillTag) => {
+    const found = masteries.find((m) => m.skillTag === skillTag);
+    return {
+      skillTag,
+      score: found?.score ?? 50,
+      isDue: found?.nextReviewAt ? found.nextReviewAt <= now : false,
+    };
+  });
+
+  // Sort: overdue SM-2 first, then lowest mastery score
+  skillRecords.sort((a, b) => {
+    if (a.isDue !== b.isDue) return a.isDue ? -1 : 1;
+    return a.score - b.score;
+  });
+
+  const target = skillRecords[0];
+  let targetDifficulty: Difficulty = "BEGINNER";
+  if (target.score >= 75) targetDifficulty = "ADVANCED";
+  else if (target.score >= 50) targetDifficulty = "INTERMEDIATE";
+
+  const uncompleted = scenarios.filter(
+    (s) =>
+      s.skillTag === target.skillTag && !completedScenarioIds.includes(s.id)
+  );
+  const picked =
+    uncompleted.find((s) => s.difficulty === targetDifficulty) ??
+    uncompleted[0] ??
+    scenarios.find((s) => !completedScenarioIds.includes(s.id)) ??
+    scenarios[0];
+
+  if (picked) {
+    return {
+      type: "SCENARIO",
+      title: picked.title,
+      skillTag: target.skillTag,
+      difficulty: picked.difficulty,
+      reason: target.isDue
+        ? `Spaced repetition review due for ${target.skillTag.replace("_", " ")} (score ${Math.round(target.score)}/100).`
+        : `Targets your lowest mastery domain: ${target.skillTag.replace("_", " ")} (${Math.round(target.score)}/100).`,
+      scenarioSlug: picked.slug,
+    };
+  }
+
+  return {
+    type: "QUIZ",
+    title: "Adaptive Knowledge Check",
+    skillTag: target.skillTag,
+    difficulty: targetDifficulty,
+    reason: `Reinforce ${target.skillTag.replace("_", " ")} concepts via spaced-repetition quiz.`,
+  };
+}

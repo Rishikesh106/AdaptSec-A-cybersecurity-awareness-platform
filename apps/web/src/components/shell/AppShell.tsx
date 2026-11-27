@@ -17,6 +17,8 @@ import {
   ShieldCheck,
   BookOpen,
   Crosshair,
+  HelpCircle,
+  ClipboardCheck,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -97,6 +99,8 @@ export function AppShell({ children, breadcrumb }: AppShellProps) {
         { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
         { href: "/tracks", label: "Learning Paths", icon: BookOpen },
         { href: "/simulations", label: "Simulations", icon: Crosshair },
+        { href: "/quiz", label: "Adaptive Quiz", icon: HelpCircle },
+        { href: "/baseline", label: "Baseline Assessment", icon: ClipboardCheck },
         { href: "/sessions", label: "Active Sessions", icon: KeyRound },
       ],
     },

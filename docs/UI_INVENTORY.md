@@ -32,3 +32,6 @@ Every interactive element in the frontend is documented here alongside its backe
 | `/simulations/[slug]` | Attachment inspect modal (`InboxSimulator`) | View file metadata & scanner notes | — | — | `InboxSimulator` |
 | `/simulations/[slug]` | Report phish / Escalate / Safe buttons | Submit decision & timeMs to server | `POST /api/v1/attempts` | Scores attempt, updates SM-2 & XP | `apps/api/tests/attempts.test.ts` |
 | `/simulations/[slug]` | Retry scenario button | Reset hesitation timer & state | — | — | `SimulationFeedbackPanel` |
+| `/quiz` | Mode & Skill selectors + Start button | Fetch non-repeating prioritized quiz | `GET /api/v1/quiz/session` | Reads `Question`, `Attempt`, `SkillMastery` | `apps/api/tests/quiz-adaptive.test.ts` |
+| `/quiz` | Submit answer button | Score MCQ/Multi-Select & update SM-2 | `POST /api/v1/attempts` | Creates `Attempt`, updates `SkillMastery` | `apps/api/tests/quiz-adaptive.test.ts` |
+| `/baseline` | Continue / Finish buttons | Calibrate baseline skill profile | `POST /api/v1/attempts`, `GET /api/v1/skills/mastery`, `GET /api/v1/recommendations/next` | Updates `SkillMastery` & returns risk score | `apps/api/tests/quiz-adaptive.test.ts` |
