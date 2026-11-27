@@ -19,3 +19,10 @@ Every interactive element in the frontend is documented here alongside its backe
 | `/team` | Send invite form | Create org invitation & send email | `POST /api/v1/invites` | Creates `Invite` & `AuditLog` | `apps/api/tests/tenant.test.ts` |
 | `/team` | Role select | Update member role | `PATCH /api/v1/memberships/:id` | Updates `Membership.role` & creates `AuditLog` | `apps/api/tests/tenant.test.ts` |
 | `/team` | Revoke invite button | Revoke pending invite | `DELETE /api/v1/invites/:id` | Sets `Invite.revokedAt` | `apps/api/tests/tenant.test.ts` |
+| `/tracks` | Search input | Filter tracks by title/description | `GET /api/v1/tracks` | Queries `Track` | `apps/api/tests/content.test.ts` |
+| `/tracks` | Open track link | Navigate to `/tracks/[slug]` | `GET /api/v1/tracks/:slug` | Reads `Track`, `Lesson`, `Scenario` | `apps/api/tests/content.test.ts` |
+| `/tracks/[slug]` | Lesson selector buttons | Switch active lesson reader | — | — | `apps/web` M2 |
+| `/tracks/[slug]` | Comprehension check button | Validate lesson checkpoint locally | — | — | `apps/web` M2 |
+| `/simulations` | Channel/difficulty/search filters | Filter paginated scenarios | `GET /api/v1/scenarios` | Queries `Scenario` scoped by org | `apps/api/tests/content.test.ts` |
+| `/simulations` | Pagination Next/Prev buttons | Page through scenario catalog | `GET /api/v1/scenarios` | Offset/limit query | `apps/api/tests/content.test.ts` |
+| `/simulations` | Inspect button & detail drawer | Open scenario brief | `GET /api/v1/scenarios/:slug` | Reads `Scenario` (redFlags hidden for Learner) | `apps/api/tests/content.test.ts` |

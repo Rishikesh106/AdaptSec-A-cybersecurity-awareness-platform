@@ -15,6 +15,8 @@ import {
   LogOut,
   ChevronRight,
   ShieldCheck,
+  BookOpen,
+  Crosshair,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -93,6 +95,8 @@ export function AppShell({ children, breadcrumb }: AppShellProps) {
       label: "Workspace",
       items: [
         { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+        { href: "/tracks", label: "Learning Paths", icon: BookOpen },
+        { href: "/simulations", label: "Simulations", icon: Crosshair },
         { href: "/sessions", label: "Active Sessions", icon: KeyRound },
       ],
     },

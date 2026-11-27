@@ -11,6 +11,7 @@ import { enforceCsrfOrigin } from "./middleware/auth.js";
 import { healthRoutes } from "./routes/health.js";
 import { authRoutes } from "./routes/auth.js";
 import { orgRoutes } from "./routes/orgs.js";
+import { contentRoutes } from "./routes/content.js";
 
 export async function buildApp() {
   const env = loadEnv();
@@ -91,6 +92,7 @@ export async function buildApp() {
     async (v1) => {
       await v1.register(authRoutes, { prefix: "/auth" });
       await v1.register(orgRoutes);
+      await v1.register(contentRoutes);
     },
     { prefix: "/api/v1" }
   );
