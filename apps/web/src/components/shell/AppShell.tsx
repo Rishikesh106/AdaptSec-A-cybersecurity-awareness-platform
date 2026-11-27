@@ -20,6 +20,8 @@ import {
   HelpCircle,
   ClipboardCheck,
   Shield,
+  Trophy,
+  Award,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -103,6 +105,8 @@ export function AppShell({ children, breadcrumb }: AppShellProps) {
         { href: "/quiz", label: "Adaptive Quiz", icon: HelpCircle },
         { href: "/games", label: "Training Labs", icon: Shield },
         { href: "/baseline", label: "Baseline Assessment", icon: ClipboardCheck },
+        { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+        { href: "/certificates", label: "Certificates", icon: Award },
         { href: "/sessions", label: "Active Sessions", icon: KeyRound },
       ],
     },
