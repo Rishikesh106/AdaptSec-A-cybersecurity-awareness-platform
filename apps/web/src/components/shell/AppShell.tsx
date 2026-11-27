@@ -22,6 +22,9 @@ import {
   Shield,
   Trophy,
   Award,
+  AlertTriangle,
+  BarChart3,
+  Megaphone,
 } from "lucide-react";
 
 interface AppShellProps {
@@ -107,6 +110,7 @@ export function AppShell({ children, breadcrumb }: AppShellProps) {
         { href: "/baseline", label: "Baseline Assessment", icon: ClipboardCheck },
         { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
         { href: "/certificates", label: "Certificates", icon: Award },
+        { href: "/threat-feed", label: "Scam Feed", icon: AlertTriangle },
         { href: "/sessions", label: "Active Sessions", icon: KeyRound },
       ],
     },
@@ -115,6 +119,8 @@ export function AppShell({ children, breadcrumb }: AppShellProps) {
           {
             label: "Administration",
             items: [
+              { href: "/admin", label: "Risk Analytics", icon: BarChart3 },
+              { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
               { href: "/team", label: "Team & Invites", icon: Users },
             ],
           },

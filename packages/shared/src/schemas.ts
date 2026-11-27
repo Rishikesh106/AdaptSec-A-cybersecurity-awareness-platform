@@ -147,3 +147,37 @@ export interface AuthUserDTO {
     department: string;
   }[];
 }
+
+// Milestone 7: Campaigns, Reports & Scam of the Week
+export const CreateCampaignSchema = z.object({
+  title: z.string().min(3).max(160),
+  description: z.string().min(5).max(2000),
+  trackId: z.string().min(1).optional(),
+  scenarioIds: z.array(z.string().min(1)).default([]),
+  scheduledAt: z.string().datetime().optional(),
+  deadline: z.string().datetime(),
+  targetDepartments: z.array(z.string().min(1)).optional(),
+  userIds: z.array(z.string().min(1)).optional(),
+  launchNow: z.boolean().default(true),
+});
+
+export const RequestReportExportSchema = z.object({
+  format: z.enum(["CSV", "PDF"]),
+  reportType: z
+    .enum(["ORG_RISK_SUMMARY", "CAMPAIGN_COMPLIANCE", "USER_RISK_MATRIX"])
+    .default("ORG_RISK_SUMMARY"),
+});
+
+export const CreateScamOfTheWeekSchema = z.object({
+  title: z.string().min(4).max(180),
+  category: z.string().min(2).max(80),
+  channel: ChannelEnum,
+  threatLevel: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).default("HIGH"),
+  summary: z.string().min(10).max(2000),
+  realWorldIncident: z.string().min(10).max(3000),
+  indicators: z.array(z.string().min(2).max(240)).min(1),
+  preventiveAdvice: z.string().min(10).max(2000),
+  scenarioId: z.string().min(1).optional(),
+});
+
+export const UpdateScamOfTheWeekSchema = CreateScamOfTheWeekSchema.partial();
