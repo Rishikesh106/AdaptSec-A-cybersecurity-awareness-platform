@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Local storage & test artifacts
+storage/
+playwright-report/
+test-results/
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db

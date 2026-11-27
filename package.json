@@ -1,0 +1,19 @@
+{
+  "name": "adaptsec-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm --parallel --stream dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "db:generate": "pnpm --filter @adaptsec/db generate",
+    "db:migrate": "pnpm --filter @adaptsec/db migrate:dev",
+    "db:seed": "pnpm --filter @adaptsec/db seed",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

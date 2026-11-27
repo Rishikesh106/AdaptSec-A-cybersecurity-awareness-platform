@@ -1,0 +1,117 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: adaptsec-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: adaptsec
+      POSTGRES_PASSWORD: adaptsec_dev_password
+      POSTGRES_DB: adaptsec
+    ports:
+      - "5432:5432"
+    volumes:
+      - adaptsec_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adaptsec -d adaptsec"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: adaptsec-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - adaptsec_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: adaptsec-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: adaptsec-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://adaptsec:adaptsec_dev_password@postgres:5432/adaptsec?schema=public
+      REDIS_URL: redis://redis:6379
+      API_PORT: 4000
+      CORS_ORIGINS: http://localhost:3000
+      JWT_ACCESS_SECRET: adaptsec-dev-access-secret-min-32-chars-2026
+      JWT_REFRESH_SECRET: adaptsec-dev-refresh-secret-min-32-chars-2026
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_FROM: AdaptSec Security <noreply@adaptsec.local>
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /app/storage
+      WEB_URL: http://localhost:3000
+      NODE_ENV: development
+    ports:
+      - "4000:4000"
+    volumes:
+      - adaptsec_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: adaptsec-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://adaptsec:adaptsec_dev_password@postgres:5432/adaptsec?schema=public
+      REDIS_URL: redis://redis:6379
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_FROM: AdaptSec Security <noreply@adaptsec.local>
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /app/storage
+      WEB_URL: http://localhost:3000
+      NODE_ENV: development
+    volumes:
+      - adaptsec_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: adaptsec-web
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  adaptsec_pgdata:
+  adaptsec_redis:
+  adaptsec_storage:

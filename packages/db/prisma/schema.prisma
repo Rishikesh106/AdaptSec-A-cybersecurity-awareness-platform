@@ -1,0 +1,487 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  LEARNER
+  ORG_ADMIN
+  CONTENT_AUTHOR
+  SUPER_ADMIN
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum Channel {
+  INBOX
+  SMS
+  WHATSAPP
+  UPI
+  VOICE_CALL
+  FAKE_LOGIN
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum QuestionType {
+  MCQ
+  MULTI_SELECT
+  SCENARIO_BASED
+  DRAG_MATCH
+  SPOT_FLAG
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+}
+
+enum ReportStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum ReportFormat {
+  CSV
+  PDF
+}
+
+model Organization {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  domain       String?
+  plan         String   @default("ENTERPRISE")
+  settingsJson Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships   Membership[]
+  invites       Invite[]
+  campaigns     Campaign[]
+  attempts      Attempt[]
+  skillMastery  SkillMastery[]
+  gameSessions  GameSession[]
+  certificates  Certificate[]
+  reportExports ReportExport[]
+  auditLogs     AuditLog[]
+  scenarios     Scenario[]
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  name                String
+  passwordHash        String?
+  avatarUrl           String?
+  emailVerified       Boolean   @default(false)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  xp                  Int       @default(0)
+  streakDays          Int       @default(0)
+  lastActiveAt        DateTime  @default(now())
+  notificationPrefs   Json      @default("{\"emailCampaigns\":true,\"emailReminders\":true,\"weeklyDigest\":true}")
+  deletedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  memberships         Membership[]
+  sessions            Session[]
+  verificationTokens  VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+  attempts            Attempt[]
+  skillMastery        SkillMastery[]
+  gameSessions        GameSession[]
+  userBadges          UserBadge[]
+  xpEvents            XPEvent[]
+  campaignAssignments CampaignAssignment[]
+  certificates        Certificate[]
+  reportExports       ReportExport[]
+  auditLogs           AuditLog[]
+}
+
+model Membership {
+  id             String           @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role             @default(LEARNER)
+  department     String           @default("General")
+  status         MembershipStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, role])
+  @@index([organizationId, department])
+}
+
+model Session {
+  id               String    @id @default(cuid())
+  userId           String
+  organizationId   String
+  refreshTokenHash String    @unique
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invite {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String
+  role           Role      @default(LEARNER)
+  department     String    @default("General")
+  tokenHash      String    @unique
+  invitedById    String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, email])
+}
+
+model Track {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  title            String
+  description      String
+  skillTag         String
+  orderIndex       Int      @default(0)
+  estimatedMinutes Int      @default(25)
+  isPublished      Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  lessons      Lesson[]
+  scenarios    Scenario[]
+  certificates Certificate[]
+}
+
+model Lesson {
+  id              String   @id @default(cuid())
+  trackId         String
+  slug            String   @unique
+  title           String
+  summary         String
+  contentMarkdown String
+  checkpointsJson Json     @default("[]")
+  durationMinutes Int      @default(5)
+  orderIndex      Int      @default(0)
+  isPublished     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([trackId, orderIndex])
+}
+
+model Scenario {
+  id                 String     @id @default(cuid())
+  organizationId     String?    // null = global platform library; set = org-custom
+  trackId            String?
+  slug               String     @unique
+  title              String
+  description        String
+  channel            Channel
+  difficulty         Difficulty @default(BEGINNER)
+  skillTag           String
+  contentJson        Json
+  redFlagsJson       Json
+  correctAction      String
+  explanationSuccess String
+  explanationFailure String
+  whatToDoInstead    String
+  isPublished        Boolean    @default(true)
+  orderIndex         Int        @default(0)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  track        Track?        @relation(fields: [trackId], references: [id], onDelete: SetNull)
+  attempts     Attempt[]
+
+  @@index([channel, difficulty])
+  @@index([skillTag])
+  @@index([organizationId])
+}
+
+model Question {
+  id             String       @id @default(cuid())
+  type           QuestionType @default(MCQ)
+  skillTag       String
+  difficulty     Difficulty   @default(BEGINNER)
+  prompt         String
+  optionsJson    Json
+  matchPairsJson Json?
+  explanation    String
+  isPublished    Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  attempts Attempt[]
+
+  @@index([skillTag, difficulty])
+}
+
+model Attempt {
+  id              String   @id @default(cuid())
+  organizationId  String
+  userId          String
+  scenarioId      String?
+  questionId      String?
+  decision        String
+  isCorrect       Boolean
+  timeMs          Int
+  flagsFoundJson  Json     @default("[]")
+  flagsMissedJson Json     @default("[]")
+  xpAwarded       Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenario     Scenario?    @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
+  question     Question?    @relation(fields: [questionId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, userId])
+  @@index([organizationId, createdAt])
+  @@index([scenarioId])
+}
+
+model SkillMastery {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  skillTag       String
+  score          Float     @default(50.0)
+  attemptsCount  Int       @default(0)
+  correctCount   Int       @default(0)
+  easeFactor     Float     @default(2.5)
+  intervalDays   Int       @default(1)
+  repetition     Int       @default(0)
+  nextReviewAt   DateTime?
+  lastTestedAt   DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId, skillTag])
+  @@index([organizationId, skillTag])
+}
+
+model GameSession {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  gameType       String    // threat-triage | netshield | passforge | daily-spot
+  seed           String
+  eventsJson     Json      @default("[]")
+  serverScore    Int       @default(0)
+  xpAwarded      Int       @default(0)
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, gameType, createdAt])
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  tier        String   @default("STANDARD")
+  criteria    Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  userBadges UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model XPEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  amount         Int
+  reason         String
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+}
+
+model Campaign {
+  id             String         @id @default(cuid())
+  organizationId String
+  title          String
+  description    String
+  trackId        String?
+  scenarioIds    Json           @default("[]")
+  scheduledAt    DateTime?
+  deadline       DateTime
+  status         CampaignStatus @default(DRAFT)
+  createdById    String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignments  CampaignAssignment[]
+
+  @@index([organizationId, status])
+}
+
+model CampaignAssignment {
+  id          String           @id @default(cuid())
+  campaignId  String
+  userId      String
+  status      AssignmentStatus @default(ASSIGNED)
+  score       Float?
+  remindedAt  DateTime?
+  completedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+}
+
+model Certificate {
+  id              String   @id @default(cuid())
+  organizationId  String
+  userId          String
+  trackId         String
+  certificateCode String   @unique
+  score           Float
+  storageKey      String?
+  issuedAt        DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track        Track        @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, userId])
+}
+
+model ScamOfTheWeek {
+  id                String   @id @default(cuid())
+  title             String
+  category          String
+  channel           Channel
+  threatLevel       String   @default("HIGH")
+  summary           String
+  realWorldIncident String
+  indicatorsJson    Json
+  preventiveAdvice  String
+  scenarioId        String?
+  publishedAt       DateTime @default(now())
+}
+
+model ReportExport {
+  id             String       @id @default(cuid())
+  organizationId String
+  requestedById  String
+  format         ReportFormat
+  reportType     String       @default("ORG_RISK_SUMMARY")
+  status         ReportStatus @default(PENDING)
+  storageKey     String?
+  errorMessage   String?
+  createdAt      DateTime     @default(now())
+  completedAt    DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedBy  User         @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, createdAt])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String?
+  actorId        String?
+  action         String
+  targetType     String
+  targetId       String?
+  metadataJson   Json     @default("{}")
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actor        User?         @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+}
