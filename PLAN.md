@@ -1,3 +1,4 @@
+
 # AdaptSec Platform — Architecture & Implementation Plan
 
 AdaptSec is a next-generation cybersecurity behavior-change and human risk management platform designed for individuals, SMBs, academic institutions, and enterprise teams.
